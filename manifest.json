@@ -1,0 +1,10 @@
+{
+	"id": "tc-integrator-20242610",
+	"name": "Teamcenter Integrator",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Teamcenter Integrator blahblah",
+	"author": "Alexey Sedoykin",
+	"authorUrl": "https://www.linkedin.com/in/sedoykin",
+	"isDesktopOnly": true
+}

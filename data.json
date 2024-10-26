@@ -1,0 +1,7 @@
+{
+  "tcUrl": "http://192.168.1.33",
+  "tcUrlWebTierPort": "7001",
+  "tcWebTierAppName": "tc",
+  "userName": "user2",
+  "userPassword": "user2"
+}
