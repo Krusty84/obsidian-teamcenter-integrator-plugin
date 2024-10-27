@@ -17,7 +17,7 @@ export interface RevisionRule {
 
 export default class TeamcenterApi {
     private settings: TeamcenterIntegratorPluginSettings;
-    private jsessionId: string | null = null;
+    public jsessionId: string | null = null;
 
     constructor(settings: TeamcenterIntegratorPluginSettings) {
         this.settings = settings;
@@ -27,9 +27,11 @@ export default class TeamcenterApi {
         this.settings = settings;
     }
 
-    async login(): Promise<void> {
+    // @ts-ignore
+    async login(tcUrl=this.settings.tcUrl,tcUrlWebTierPort=this.settings.tcUrlWebTierPort,
+                tcWebTierAppName=this.settings.tcWebTierAppName,userName = this.settings.userName, userPassword = this.settings.userPassword): Promise<string | undefined> {
         this.jsessionId='';
-        const url = `${this.settings.tcUrl}:${this.settings.tcUrlWebTierPort}/${this.settings.tcWebTierAppName}/JsonRestServices/Core-2011-06-Session/login`;
+        const url = `${tcUrl}:${tcUrlWebTierPort}/${tcWebTierAppName}/JsonRestServices/Core-2011-06-Session/login`;
 
         const payload = {
             header: {
@@ -38,8 +40,8 @@ export default class TeamcenterApi {
             },
             body: {
                 credentials: {
-                    user: this.settings.userName,
-                    password: this.settings.userPassword,
+                    user: userName,
+                    password: userPassword,
                     role: "",
                     descrimator: "",
                     locale: "",
@@ -77,6 +79,8 @@ export default class TeamcenterApi {
                     if (jsessionIdMatch) {
                         this.jsessionId = jsessionIdMatch[1];
                         console.log('Logged in successfully. JSESSIONID:', this.jsessionId);
+                        return this.jsessionId;
+
                     } else {
                         console.error('JSESSIONID not found in Set-Cookie header.');
                     }
@@ -85,19 +89,22 @@ export default class TeamcenterApi {
                 }
             } else {
                 console.error('Login failed. Status:', response.status, 'Response:', response.text);
+                return "500";
             }
         } catch (error) {
             console.error('An error occurred during login:', error);
+            return error;
         }
     }
 
-    async loadRevisionRule(): Promise<RevisionRule[]> {
+    async loadRevisionRule(tcUrl=this.settings.tcUrl,tcUrlWebTierPort=this.settings.tcUrlWebTierPort,
+                           tcWebTierAppName=this.settings.tcWebTierAppName): Promise<RevisionRule[]> {
         if (!this.jsessionId) {
             console.error('Not logged in. Please login first.');
             throw new Error('Not logged in');
         }
 
-        const url = `${this.settings.tcUrl}:${this.settings.tcUrlWebTierPort}/tc/JsonRestServices/Cad-2007-01-StructureManagement/getRevisionRules`;
+        const url = `${tcUrl}:${tcUrlWebTierPort}/${tcWebTierAppName}/JsonRestServices/Cad-2007-01-StructureManagement/getRevisionRules`;
 
         const payload = {
             "header": {

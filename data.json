@@ -3,5 +3,7 @@
   "tcUrlWebTierPort": "7001",
   "tcWebTierAppName": "tc",
   "userName": "user2",
-  "userPassword": "user2"
+  "userPassword": "user2",
+  "selectedRevisionRuleUid": "C_nFN7dwppgr6D",
+  "selectedRevisionRuleName": "Freeze Point or Latest"
 }

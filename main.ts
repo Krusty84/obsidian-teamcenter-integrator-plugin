@@ -12,6 +12,8 @@ export interface TeamcenterIntegratorPluginSettings {
 	tcWebTierAppName:string;
 	userName: string;
 	userPassword: string;
+	selectedRevisionRuleName:string;
+	selectedRevisionRuleUid:string;
 }
 
 
