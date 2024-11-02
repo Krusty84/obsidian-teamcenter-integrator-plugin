@@ -1,8 +1,47 @@
-/*
+/* Styles for the modal */
+.modal-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.header-container {
+    /* Fix the header at the top */
+    position: sticky;
+    top: 0;
+    background-color: var(--background-primary);
+    padding-bottom: 1em;
+    z-index: 1;
+}
 
-If your plugin does not need CSS, delete this file.
+.content-container {
+    /* Allow the content to scroll */
+    flex: 1;
+    overflow-y: auto;
+}
 
-*/
+/* Existing styles for BOM table and other elements */
+.bom-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.bom-table th, .bom-table td {
+    border: 1px solid #ccc;
+    padding: 4px 8px;
+    text-align: left;
+}
+.bom-row .toggle-icon {
+    cursor: pointer;
+    margin-right: 4px;
+}
+.hidden {
+    display: none;
+}
+.highlighted {
+    background-color: #ffe085;
+}
+.bom-collapsible summary {
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 8px;
+}
