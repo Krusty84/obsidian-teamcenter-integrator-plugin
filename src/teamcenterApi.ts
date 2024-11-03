@@ -382,6 +382,8 @@ export default class TeamcenterApi {
                                 { "name": "item_id" },
                                 { "name": "item_revision_id" },
                                 { "name": "object_name" },
+                                { "name": "object_desc" },
+                                { "name": "object_type" },
                                 { "name": "owning_user" },
                                 { "name": "last_mod_date" }
                             ]
@@ -442,8 +444,10 @@ export default class TeamcenterApi {
         const parserConfig = {
             attributes: [
                 { internalName: 'item_id', displayName: 'Item ID' },
-                { internalName: 'item_revision_id', displayName: 'Revision ID' },
+                { internalName: 'item_revision_id', displayName: 'Rev ID' },
                 { internalName: 'object_name', displayName: 'Name' },
+                { internalName: 'object_desc', displayName: 'Desc' },
+                { internalName: 'object_type', displayName: 'Type' },
                 { internalName: 'owning_user', displayName: 'Owner' },
                 { internalName: 'last_mod_date', displayName: 'Last Mod Date' }
             ],

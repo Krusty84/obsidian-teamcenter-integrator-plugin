@@ -1,15 +1,29 @@
-/* Styles for the modal */
+.teamcenter-modal {
+    width: 800px; /* Set the desired width */
+    height: 600px; /* Set the desired height */
+    max-width: 90%; /* Optional: Adjust max-width */
+    max-height: 90%; /* Optional: Adjust max-height */
+}
+
+
+.teamcenter-modal .modal-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
 .modal-wrapper {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100%; /* Ensure the wrapper fills the modal */
+    max-height: 100%;
 }
 
 .header-container {
     /* Fix the header at the top */
     position: sticky;
     top: 0;
-    background-color: var(--background-primary);
+    /*background-color: var(--background-primary);*/
     padding-bottom: 1em;
     z-index: 1;
 }
@@ -18,30 +32,86 @@
     /* Allow the content to scroll */
     flex: 1;
     overflow-y: auto;
+    max-height: calc(100vh - 200px); /* Adjust based on header height */
+}
+.toggle-icon {
+    cursor: pointer;
+    margin-right: 4px;
 }
 
-/* Existing styles for BOM table and other elements */
+/* Styles for BOM table and other elements */
 .bom-table {
     width: 100%;
     border-collapse: collapse;
 }
-.bom-table th, .bom-table td {
+
+.bom-table th,
+.bom-table td {
     border: 1px solid #ccc;
     padding: 4px 8px;
     text-align: left;
 }
+
 .bom-row .toggle-icon {
     cursor: pointer;
     margin-right: 4px;
 }
+
 .hidden {
     display: none;
 }
+
 .highlighted {
     background-color: #ffe085;
 }
+
 .bom-collapsible summary {
     font-weight: bold;
     cursor: pointer;
     margin-bottom: 8px;
+}
+
+/* Indentation classes for depth levels */
+.depth-0 td {
+    padding-left: 0px;
+}
+
+.depth-1 td {
+    padding-left: 15px;
+}
+
+.depth-2 td {
+    padding-left: 30px;
+}
+
+.depth-3 td {
+    padding-left: 45px;
+}
+
+.depth-4 td {
+    padding-left: 60px;
+}
+
+.depth-5 td {
+    padding-left: 75px;
+}
+
+.depth-6 td {
+    padding-left: 90px;
+}
+
+.depth-7 td {
+    padding-left: 105px;
+}
+
+.depth-8 td {
+    padding-left: 120px;
+}
+
+.depth-9 td {
+    padding-left: 135px;
+}
+
+.depth-10 td {
+    padding-left: 150px;
 }

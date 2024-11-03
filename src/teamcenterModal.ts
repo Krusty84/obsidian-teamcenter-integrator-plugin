@@ -1,6 +1,6 @@
 // TeamcenterModal.ts
 
-import { App,Modal, Setting } from 'obsidian';
+import {App, Modal, Notice, Setting, TFile} from 'obsidian';
 import TeamcenterApi, { BOMNode, RevisionRule} from './teamcenterApi';
 //import {TeamcenterIntegratorPluginSettings} from 'src/settings'
 import { TeamcenterIntegratorPluginSettings } from 'main';
@@ -14,13 +14,15 @@ export class TeamcenterModal extends Modal {
     private revId = "";
     private settings: TeamcenterIntegratorPluginSettings;
     private contentContainer: HTMLElement;
+    private bomTree: BOMNode | null = null;
     constructor(app: App,settings: TeamcenterIntegratorPluginSettings) {
         super(app);
         this.settings = settings;
     }
 
     async onOpen() {
-        const {contentEl} = this;
+        const {contentEl,modalEl} = this;
+        modalEl.addClass('teamcenter-modal');
         this.teamcenterApi = new TeamcenterApi(this.settings);
         contentEl.empty();
         // Create a wrapper for the entire modal content
@@ -30,16 +32,16 @@ export class TeamcenterModal extends Modal {
         headerContainer.createEl('h2', { text: 'Teamcenter Query' });
 
         // Text field for Item ID
-   /*     new Setting(contentEl)
+        new Setting(headerContainer)
             .setName('Item ID')
             .addText(text => {
                 text.setPlaceholder('Enter Item ID')
                     .onChange(value => {
                         this.itemId = value;
                     });
-            });*/
+            });
 
-        new Setting(contentEl)
+   /*     new Setting(headerContainer)
             .setName('Item ID')
             .addText(text => {
                 text.setPlaceholder('Enter Item ID')
@@ -47,9 +49,9 @@ export class TeamcenterModal extends Modal {
                     .onChange(value => {
                         this.itemId = value;
                     });
-            });
+            });*/
 
-        new Setting(contentEl)
+        new Setting(headerContainer)
             .setName('Revision ID')
             .addText(text => {
                 text.setPlaceholder('Enter Revision ID')
@@ -59,7 +61,7 @@ export class TeamcenterModal extends Modal {
             });
 
         // Submit button
-        new Setting(contentEl)
+        new Setting(headerContainer)
             .addButton(button => {
                 button.setButtonText('Submit')
                     .setCta()
@@ -67,15 +69,21 @@ export class TeamcenterModal extends Modal {
                         await this.teamcenterApi.login();
                         const { itemUid, itemRevUid } = await this.teamcenterApi.getItemUIDfromID(this.itemId,this.revId);
                         const { bomWindowUid, bomLineUid } = await this.teamcenterApi.createBOMWindow(itemUid);
-                        const bomTree = await this.teamcenterApi.openBOM(bomLineUid);
-                        this.displayBOM(bomTree);
+                        this.bomTree = await this.teamcenterApi.openBOM(bomLineUid);
+                        this.displayBOM(this.bomTree);
                         console.log(itemUid+"_"+itemRevUid);
                         //this.submit();
                     });
             });
-
+        new Setting(headerContainer)
+            .addButton(button => {
+                button.setButtonText('Sync')
+                    .onClick(async () => {
+                        await this.syncBOM();
+                    });
+            });
         // Cancel button
-        new Setting(contentEl)
+        new Setting(headerContainer)
             .addButton(button => {
                 button.setButtonText('Cancel')
                     .onClick(() => {
@@ -86,9 +94,9 @@ export class TeamcenterModal extends Modal {
         this.contentContainer = wrapper.createDiv({ cls: 'content-container' });
 
         // If a BOM has already been displayed, show it
-       /* if (this.bomTree) {
+        if (this.bomTree) {
             this.displayBOM(this.bomTree);
-        }*/
+        }
     }
 
     onClose() {
@@ -96,75 +104,6 @@ export class TeamcenterModal extends Modal {
         contentEl.empty();
     }
 
-    submit() {
-        // Handle the form submission
-       // console.log('Selected Revision Rule:', this.settings.selectedRevisionRuleUid);
-        console.log('Item ID:', this.itemId);
-        console.log('Item ID:', this.revId);
-
-        // Perform any actions with the data here
-
-        //this.close();
-    }
-    /*displayBOM(bomTree: BOMNode) {
-        const { contentEl } = this;
-
-        // Clear existing content
-        contentEl.empty();
-
-        // Create a container for the BOM
-        const container = contentEl.createDiv({ cls: 'bom-container' });
-
-        // Set the header
-        container.createEl('h2', { text: `Teamcenter BOM Structure: ${this.itemId}` });
-
-        // Create a table
-        const table = container.createEl('table', { cls: 'bom-table' });
-
-        // Create the table header
-        const thead = table.createEl('thead');
-        const headerRow = thead.createEl('tr');
-        headerRow.createEl('th', { text: 'Item ID' });
-        headerRow.createEl('th', { text: 'Revision ID' });
-        headerRow.createEl('th', { text: 'Name' });
-        headerRow.createEl('th', { text: 'Owner' });
-        headerRow.createEl('th', { text: 'Last Mod Date' });
-
-        // Create the table body
-        const tbody = table.createEl('tbody');
-
-        // Generate and append the BOM rows
-        const bomHtml = this.generateBOMHtml(bomTree);
-        tbody.innerHTML = bomHtml;
-
-        // Add styles
-        const style = document.createElement('style');
-        style.textContent = `
-    .bom-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .bom-table th, .bom-table td {
-      border: 1px solid #ccc;
-      padding: 4px 8px;
-      text-align: left;
-    }
-    .bom-row .toggle-icon {
-      cursor: pointer;
-      margin-right: 4px;
-    }
-    .hidden {
-      display: none;
-    }
-    .highlighted {
-      background-color: #ffe085;
-    }
-  `;
-        contentEl.appendChild(style);
-
-        // Add event listeners
-        this.addEventListeners(container);
-    }*/
     displayBOM(bomTree: BOMNode) {
         const container = this.contentContainer;
 
@@ -184,6 +123,8 @@ export class TeamcenterModal extends Modal {
         headerRow.createEl('th', { text: 'Item ID' });
         headerRow.createEl('th', { text: 'Revision ID' });
         headerRow.createEl('th', { text: 'Name' });
+        headerRow.createEl('th', { text: 'Desc' });
+        headerRow.createEl('th', { text: 'Type' });
         headerRow.createEl('th', { text: 'Owner' });
         headerRow.createEl('th', { text: 'Last Mod Date' });
 
@@ -194,88 +135,33 @@ export class TeamcenterModal extends Modal {
         const bomHtml = this.generateBOMHtml(bomTree);
         tbody.innerHTML = bomHtml;
 
-        // Add styles if not already added
-        if (!this.contentEl.querySelector('#modal-styles')) {
-            const style = document.createElement('style');
-            style.id = 'modal-styles';
-            style.textContent = `
-      /* Styles for the modal */
-      .modal-wrapper {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-      }
-
-      .header-container {
-        /* Fix the header at the top */
-        position: sticky;
-        top: 0;
-        background-color: var(--background-primary);
-        padding-bottom: 1em;
-        z-index: 1;
-      }
-
-      .content-container {
-        /* Allow the content to scroll */
-        flex: 1;
-        overflow-y: auto;
-      }
-
-      /* Existing styles for BOM table and other elements */
-      .bom-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      .bom-table th, .bom-table td {
-        border: 1px solid #ccc;
-        padding: 4px 8px;
-        text-align: left;
-      }
-      .bom-row .toggle-icon {
-        cursor: pointer;
-        margin-right: 4px;
-      }
-      .hidden {
-        display: none;
-      }
-      .highlighted {
-        background-color: #ffe085;
-      }
-      .bom-collapsible summary {
-        font-weight: bold;
-        cursor: pointer;
-        margin-bottom: 8px;
-      }
-    `;
-            this.contentEl.appendChild(style);
-        }
-
         // Add event listeners
         this.addEventListeners(collapsibleSection);
     }
-
-
-
 
     generateBOMHtml(bomNode: BOMNode, parentUid: string | null = null, depth: number = 0): string {
         const rowId = `row-${bomNode.uid.replace(/[^a-zA-Z0-9]/g, '')}`;
         const parentRowId = parentUid ? `row-${parentUid.replace(/[^a-zA-Z0-9]/g, '')}` : null;
         const hasChildren = bomNode.children.length > 0;
 
-        // Prepare indentation based on depth
-        const indent = depth * 20;
+        const depthClass = `depth-${depth}`; // Assign a class based on depth
+
+        // Use Unicode triangles for expand/collapse icons
+        const toggleIcon = hasChildren ? `<span class="toggle-icon">▶</span>` : '';
 
         // Build the row HTML
-        let rowHtml = `<tr id="${rowId}" data-depth="${depth}"${parentRowId ? ` data-parent="${parentRowId}"` : ''} class="bom-row">
-    <td style="padding-left: ${indent}px;">
-      ${hasChildren ? `<span class="toggle-icon">[+]</span>` : ''}
-      ${bomNode.attributes['item_id'] || 'N/A'}
-    </td>
-    <td>${bomNode.attributes['item_revision_id'] || 'N/A'}</td>
-    <td>${bomNode.attributes['object_name'] || 'N/A'}</td>
-    <td>${bomNode.attributes['owning_user'] || 'N/A'}</td>
-    <td>${bomNode.attributes['last_mod_date'] || 'N/A'}</td>
-  </tr>`;
+        let rowHtml = `<tr id="${rowId}" data-depth="${depth}"${parentRowId ? ` data-parent="${parentRowId}"` : ''} class="bom-row ${depthClass}">
+      <td>
+        ${toggleIcon}
+        ${bomNode.attributes['item_id'] || 'N/A'}
+      </td>
+      <td>${bomNode.attributes['item_revision_id'] || 'N/A'}</td>
+      <td>${bomNode.attributes['object_name'] || 'N/A'}</td>
+      <td>${bomNode.attributes['object_desc'] || 'N/A'}</td>
+      <td>${bomNode.attributes['object_type'] || 'N/A'}</td>
+      <td>${bomNode.attributes['owning_user'] || 'N/A'}</td>
+      <td>${bomNode.attributes['last_mod_date'] || 'N/A'}</td>
+    </tr>`;
 
         // Recursively build child rows
         let childrenHtml = '';
@@ -290,15 +176,24 @@ export class TeamcenterModal extends Modal {
         const rows = container.querySelectorAll('.bom-row');
 
         rows.forEach(row => {
-            const toggleIcon = row.querySelector('.toggle-icon');
+            const toggleIcon = row.querySelector('.toggle-icon') as HTMLElement;
             const rowId = row.id;
-            const depth = parseInt(row.getAttribute('data-depth') || '0');
 
             if (toggleIcon) {
                 toggleIcon.addEventListener('click', (event) => {
                     event.stopPropagation(); // Prevent row click event
-                    const isExpanded = toggleIcon.textContent === '[-]';
-                    toggleIcon.textContent = isExpanded ? '[+]' : '[-]';
+
+                    const iconElement = event.currentTarget as HTMLElement;
+                    const isExpanded = iconElement.getAttribute('data-expanded') === 'true';
+
+                    // Update the icon and data-expanded attribute
+                    if (isExpanded) {
+                        iconElement.textContent = '▶'; // Collapsed state
+                        iconElement.setAttribute('data-expanded', 'false');
+                    } else {
+                        iconElement.textContent = '▼'; // Expanded state
+                        iconElement.setAttribute('data-expanded', 'true');
+                    }
 
                     // Toggle child rows
                     this.toggleChildRows(rowId, !isExpanded);
@@ -324,9 +219,10 @@ export class TeamcenterModal extends Modal {
 
             // If hiding, also hide all descendant rows
             if (!show) {
-                const toggleIcon = row.querySelector('.toggle-icon');
-                if (toggleIcon && toggleIcon.textContent === '[-]') {
-                    toggleIcon.textContent = '[+]';
+                const toggleIcon = row.querySelector('.toggle-icon') as HTMLElement;
+                if (toggleIcon) {
+                    toggleIcon.textContent = '▶'; // Set to collapsed state
+                    toggleIcon.setAttribute('data-expanded', 'false');
                 }
                 this.toggleChildRows(row.id, false);
             }
@@ -342,12 +238,146 @@ export class TeamcenterModal extends Modal {
         row.classList.add('highlighted');
     }
 
-    toggleHighlight(element: HTMLElement) {
-        // Remove highlighting from previously selected items
-        const highlightedItems = this.contentEl.querySelectorAll('.bom-item.highlighted');
-        highlightedItems.forEach(item => item.classList.remove('highlighted'));
 
-        // Add highlighting to the clicked item
-        element.classList.add('highlighted');
+    generateNoteContent(bomNode: BOMNode): string {
+        // Define the attributes to include in the note
+        const attributesToInclude = [
+            { internalName: 'item_id', displayName: 'Item ID' },
+            { internalName: 'item_revision_id', displayName: 'Revision ID' },
+            { internalName: 'object_name', displayName: 'Name' },
+            { internalName: 'object_desc', displayName: 'Description' },
+            { internalName: 'owning_user', displayName: 'Owner' },
+            { internalName: 'last_mod_date', displayName: 'Last Modified' },
+            // Add or remove attributes as needed
+        ];
+
+        // Build the table content
+        let tableContent = `| Attribute | Value |\n|---|---|\n`;
+        for (const attr of attributesToInclude) {
+            const value = bomNode.attributes[attr.internalName] || 'N/A';
+            tableContent += `| ${attr.displayName} | ${value} |\n`;
+        }
+
+        // Return the note content
+        return tableContent;
     }
+
+
+    sanitizeFileName(name: string): string {
+        // Replace invalid characters with underscores
+        return name.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_');
+    }
+
+    generateAttributesSection(bomNode: BOMNode): string {
+        // Use the attributes from settings or default
+        /*const attributesToInclude = this.settings.attributesToInclude || [*/
+        const attributesToInclude =  [
+            { internalName: 'item_id', displayName: 'Item ID' },
+            { internalName: 'item_revision_id', displayName: 'Revision ID' },
+            { internalName: 'object_name', displayName: 'Name' },
+            { internalName: 'object_desc', displayName: 'Description' },
+            { internalName: 'owning_user', displayName: 'Owner' },
+            { internalName: 'last_mod_date', displayName: 'Last Modified' },
+        ];
+
+        // Build the table content
+        let tableContent = `| Attribute | Value |\n|---|---|\n`;
+        for (const attr of attributesToInclude) {
+            const value = bomNode.attributes[attr.internalName] || 'N/A';
+            tableContent += `| ${attr.displayName} | ${value} |\n`;
+        }
+
+        // Wrap the table with markers
+        return `<!-- START ATTRIBUTES -->\n${tableContent}<!-- END ATTRIBUTES -->\n`;
+    }
+    updateNoteContent(existingContent: string, newAttributesSection: string): string {
+        const startMarker = '<!-- START ATTRIBUTES -->';
+        const endMarker = '<!-- END ATTRIBUTES -->';
+
+        const startIndex = existingContent.indexOf(startMarker);
+        const endIndex = existingContent.indexOf(endMarker);
+
+        if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+            // Replace the existing attributes section
+            const beforeAttributes = existingContent.substring(0, startIndex);
+            const afterAttributes = existingContent.substring(endIndex + endMarker.length);
+            return `${beforeAttributes}${newAttributesSection}${afterAttributes}`;
+        } else {
+            // Markers not found; insert attributes at the beginning
+            return `${newAttributesSection}\n\n${existingContent}`;
+        }
+    }
+
+
+    async syncBOMNode(bomNode: BOMNode, parentFolderPath: string) {
+        const vault = this.app.vault;
+
+        // Create the folder for the current BOM node
+        const folderName = `${bomNode.attributes['item_id']}_${bomNode.attributes['object_name']}`;
+        const sanitizedFolderName = this.sanitizeFileName(folderName);
+        const currentFolderPath = `${parentFolderPath}/${sanitizedFolderName}`;
+
+        // Check if the folder exists
+        let currentFolder = vault.getAbstractFileByPath(currentFolderPath);
+        if (!currentFolder) {
+            await vault.createFolder(currentFolderPath);
+        }
+
+        // Create the note inside the current folder
+        const noteName = `${bomNode.attributes['item_id']}/${bomNode.attributes['item_revision_id']}_${bomNode.attributes['object_name']}.md`;
+        const sanitizedNoteName = this.sanitizeFileName(noteName);
+        const notePath = `${currentFolderPath}/${sanitizedNoteName}`;
+
+        // Generate the attributes section
+        const attributesSection = this.generateAttributesSection(bomNode);
+
+        // Check if the note exists
+        let existingNote = vault.getAbstractFileByPath(notePath);
+        if (existingNote && existingNote instanceof TFile) {
+            // Read the existing note content
+            const existingContent = await vault.read(existingNote);
+
+            // Replace or insert the attributes section
+            const updatedContent = this.updateNoteContent(existingContent, attributesSection);
+
+            // Update the note with the new content
+            await vault.modify(existingNote, updatedContent);
+        } else {
+            // Note doesn't exist; create a new note with attributes and a placeholder for manual content
+            const noteContent = `${attributesSection}\n\n# Notes\n\n*Add your notes here.*\n`;
+            await vault.create(notePath, noteContent);
+        }
+
+        // Recursively process child BOM nodes
+        for (const childNode of bomNode.children) {
+            await this.syncBOMNode(childNode, currentFolderPath);
+        }
+    }
+
+    async syncBOM() {
+        // Ensure that a BOM has been loaded
+        if (!this.bomTree) {
+            new Notice('Please load a BOM before syncing.');
+            return;
+        }
+
+        const vault = this.app.vault;
+        const teamcenterBOMFolder = 'Teamcenter BOMs';
+
+        // Check if "Teamcenter BOMs" folder exists
+        let teamcenterFolder = vault.getAbstractFileByPath(teamcenterBOMFolder);
+        if (!teamcenterFolder) {
+            await vault.createFolder(teamcenterBOMFolder);
+        }
+
+        // Start synchronization
+        try {
+            await this.syncBOMNode(this.bomTree, teamcenterBOMFolder);
+            new Notice('BOM synchronized successfully.');
+        } catch (error) {
+            console.error('Error during BOM synchronization:', error);
+            new Notice('Failed to synchronize BOM. Check console for details.');
+        }
+    }
+
 }
