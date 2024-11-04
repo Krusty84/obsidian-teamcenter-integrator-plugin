@@ -289,8 +289,8 @@ export class TeamcenterModal extends Modal {
 
         // Build the URL using tcUrl from settings and UID from bomNode
         const tcUrl = this.settings.tcAWCUrl || '';
-        const uid = bomNode.uid;
-        const teamcenterUrl = `${tcUrl}#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid=${uid}`;
+        const itemRevUid = bomNode.itemRevUid;
+        const teamcenterUrl = `${tcUrl}#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid=${itemRevUid}`;
 
         // Add the URL below the table
         const urlContent = `\n[Open in Teamcenter](${teamcenterUrl})\n`;
