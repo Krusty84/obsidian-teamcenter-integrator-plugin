@@ -2,8 +2,8 @@
 
 import {App, Modal, Notice, Setting, TFile} from 'obsidian';
 import TeamcenterApi, { BOMNode, RevisionRule} from './teamcenterApi';
-//import {TeamcenterIntegratorPluginSettings} from 'src/settings'
-import { TeamcenterIntegratorPluginSettings } from 'main';
+import {TeamcenterIntegratorPluginSettings} from 'src/settings'
+//import { TeamcenterIntegratorPluginSettings } from 'main';
 export class TeamcenterModal extends Modal {
     //settings: TeamcenterIntegratorPluginSettings;
     teamcenterApi: TeamcenterApi;
@@ -287,8 +287,16 @@ export class TeamcenterModal extends Modal {
             tableContent += `| ${attr.displayName} | ${value} |\n`;
         }
 
+        // Build the URL using tcUrl from settings and UID from bomNode
+        const tcUrl = this.settings.tcAWCUrl || '';
+        const uid = bomNode.uid;
+        const teamcenterUrl = `${tcUrl}#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid=${uid}`;
+
+        // Add the URL below the table
+        const urlContent = `\n[Open in Teamcenter](${teamcenterUrl})\n`;
+
         // Wrap the table with markers
-        return `<!-- START ATTRIBUTES -->\n${tableContent}<!-- END ATTRIBUTES -->\n`;
+        return `<!-- START ATTRIBUTES -->\n${tableContent}${urlContent}<!-- END ATTRIBUTES -->\n`;
     }
     updateNoteContent(existingContent: string, newAttributesSection: string): string {
         const startMarker = '<!-- START ATTRIBUTES -->';

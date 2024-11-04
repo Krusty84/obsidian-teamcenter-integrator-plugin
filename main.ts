@@ -10,6 +10,7 @@ export interface TeamcenterIntegratorPluginSettings {
 	tcUrl: string;
 	tcUrlWebTierPort: string;
 	tcWebTierAppName:string;
+	tcAWCUrl:string;
 	userName: string;
 	userPassword: string;
 	selectedRevisionRuleName:string;
