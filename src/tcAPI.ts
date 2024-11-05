@@ -1,6 +1,6 @@
-// TeamcenterApi.ts
+// TcAPI.ts
 
-import { requestUrl, RequestUrlParam, RequestUrlResponse } from 'obsidian';
+import {requestUrl, RequestUrlParam, RequestUrlResponse} from 'obsidian';
 
 interface TeamcenterIntegratorPluginSettings {
     tcUrl: string;
@@ -21,15 +21,11 @@ export interface BOMNode {
     children: BOMNode[];
 }
 
-export default class TeamcenterApi {
+export default class TcAPI {
     private settings: TeamcenterIntegratorPluginSettings;
     public jsessionId: string | null = null;
 
     constructor(settings: TeamcenterIntegratorPluginSettings) {
-        this.settings = settings;
-    }
-
-    updateSettings(settings: TeamcenterIntegratorPluginSettings) {
         this.settings = settings;
     }
 
@@ -153,11 +149,8 @@ export default class TeamcenterApi {
 
             if (response.status === 200) {
                 const data = response.json;
-
                 const revisionRules: RevisionRule[] = [];
-
                 const outputArray = data.output;
-
                 const modelObjects = data.ServiceData?.modelObjects;
 
                 if (!Array.isArray(outputArray) || !modelObjects) {
@@ -420,8 +413,7 @@ export default class TeamcenterApi {
             if (response.status === 200) {
                 const data = response.json;
                 // Process the raw BOM data into a structured format
-                const bomTree = this.processBOMData(bomLineUid, data);
-                return bomTree;
+                return this.processBOMData(bomLineUid, data);
             } else {
                 console.error('Failed to expand BOM. Status:', response.status, 'Response:', response.text);
                 throw new Error('Failed to expand BOM');

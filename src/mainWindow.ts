@@ -1,15 +1,12 @@
-// TeamcenterModal.ts
+// MainWindow.ts
 
 import {App, Modal, Notice, Setting, TFile} from 'obsidian';
-import TeamcenterApi, { BOMNode, RevisionRule} from './teamcenterApi';
+import TcAPI, { BOMNode} from './tcAPI';
 import {TeamcenterIntegratorPluginSettings} from 'src/settings'
-//import { TeamcenterIntegratorPluginSettings } from 'main';
-export class TeamcenterModal extends Modal {
+import {generateBOMHtml, syncBOM} from "./bomUtils";
+export class MainWindow extends Modal {
     //settings: TeamcenterIntegratorPluginSettings;
-    teamcenterApi: TeamcenterApi;
-    private revisionRules: RevisionRule[] = [];
-    private selectedRevisionRuleUid: string | null = null;
-    private selectedRevisionRule: string | null = null;
+    tcAPI: TcAPI;
     private itemId = "";
     private revId = "";
     private settings: TeamcenterIntegratorPluginSettings;
@@ -23,7 +20,7 @@ export class TeamcenterModal extends Modal {
     async onOpen() {
         const {contentEl,modalEl} = this;
         modalEl.addClass('teamcenter-modal');
-        this.teamcenterApi = new TeamcenterApi(this.settings);
+        this.tcAPI = new TcAPI(this.settings);
         contentEl.empty();
         // Create a wrapper for the entire modal content
         const wrapper = contentEl.createDiv({ cls: 'modal-wrapper' });
@@ -41,16 +38,6 @@ export class TeamcenterModal extends Modal {
                     });
             });
 
-   /*     new Setting(headerContainer)
-            .setName('Item ID')
-            .addText(text => {
-                text.setPlaceholder('Enter Item ID')
-                    .setValue(this.itemId)
-                    .onChange(value => {
-                        this.itemId = value;
-                    });
-            });*/
-
         new Setting(headerContainer)
             .setName('Revision ID')
             .addText(text => {
@@ -60,26 +47,25 @@ export class TeamcenterModal extends Modal {
                     });
             });
 
-        // Submit button
         new Setting(headerContainer)
             .addButton(button => {
-                button.setButtonText('Submit')
+                button.setButtonText('Search')
                     .setCta()
                     .onClick(async () => {
-                        await this.teamcenterApi.login();
-                        const { itemUid, itemRevUid } = await this.teamcenterApi.getItemUIDfromID(this.itemId,this.revId);
-                        const { bomWindowUid, bomLineUid } = await this.teamcenterApi.createBOMWindow(itemUid);
-                        this.bomTree = await this.teamcenterApi.openBOM(bomLineUid);
+                        //Teamcenter Dance Start
+                        await this.tcAPI.login();
+                        const { itemUid, itemRevUid } = await this.tcAPI.getItemUIDfromID(this.itemId,this.revId);
+                        const { bomLineUid } = await this.tcAPI.createBOMWindow(itemUid);
+                        this.bomTree = await this.tcAPI.openBOM(bomLineUid);
                         this.displayBOM(this.bomTree);
-                        console.log(itemUid+"_"+itemRevUid);
-                        //this.submit();
+                        //Teamcenter Dance Finish
                     });
             });
         new Setting(headerContainer)
             .addButton(button => {
                 button.setButtonText('Sync')
                     .onClick(async () => {
-                        await this.syncBOM();
+                        await syncBOM(this.bomTree);
                     });
             });
         // Cancel button
@@ -106,17 +92,13 @@ export class TeamcenterModal extends Modal {
 
     displayBOM(bomTree: BOMNode) {
         const container = this.contentContainer;
-
         // Clear previous BOM content
         container.empty();
-
         // Create the collapsible section using <details> and <summary>
         const collapsibleSection = container.createEl('details', { cls: 'bom-collapsible' });
-        const summary = collapsibleSection.createEl('summary', { text: 'View BOM Structure' });
-
+        collapsibleSection.createEl('summary', { text: 'Open BOM Structure' });
         // Create a table inside the collapsible section
         const table = collapsibleSection.createEl('table', { cls: 'bom-table' });
-
         // Create the table header
         const thead = table.createEl('thead');
         const headerRow = thead.createEl('tr');
@@ -132,14 +114,15 @@ export class TeamcenterModal extends Modal {
         const tbody = table.createEl('tbody');
 
         // Generate and append the BOM rows
-        const bomHtml = this.generateBOMHtml(bomTree);
+       // const bomHtml = this.generateBOMHtml(bomTree);
+        const bomHtml = generateBOMHtml(bomTree);
         tbody.innerHTML = bomHtml;
 
         // Add event listeners
         this.addEventListeners(collapsibleSection);
     }
 
-    generateBOMHtml(bomNode: BOMNode, parentUid: string | null = null, depth: number = 0): string {
+    /*generateBOMHtml(bomNode: BOMNode, parentUid: string | null = null, depth: number = 0): string {
         const rowId = `row-${bomNode.uid.replace(/[^a-zA-Z0-9]/g, '')}`;
         const parentRowId = parentUid ? `row-${parentUid.replace(/[^a-zA-Z0-9]/g, '')}` : null;
         const hasChildren = bomNode.children.length > 0;
@@ -170,7 +153,7 @@ export class TeamcenterModal extends Modal {
         }
 
         return rowHtml + childrenHtml;
-    }
+    }*/
 
     addEventListeners(container: HTMLElement) {
         const rows = container.querySelectorAll('.bom-row');
@@ -237,40 +220,14 @@ export class TeamcenterModal extends Modal {
         // Add highlighting to the selected row
         row.classList.add('highlighted');
     }
-
-
-    generateNoteContent(bomNode: BOMNode): string {
-        // Define the attributes to include in the note
-        const attributesToInclude = [
-            { internalName: 'item_id', displayName: 'Item ID' },
-            { internalName: 'item_revision_id', displayName: 'Revision ID' },
-            { internalName: 'object_name', displayName: 'Name' },
-            { internalName: 'object_desc', displayName: 'Description' },
-            { internalName: 'owning_user', displayName: 'Owner' },
-            { internalName: 'last_mod_date', displayName: 'Last Modified' },
-            // Add or remove attributes as needed
-        ];
-
-        // Build the table content
-        let tableContent = `| Attribute | Value |\n|---|---|\n`;
-        for (const attr of attributesToInclude) {
-            const value = bomNode.attributes[attr.internalName] || 'N/A';
-            tableContent += `| ${attr.displayName} | ${value} |\n`;
-        }
-
-        // Return the note content
-        return tableContent;
-    }
-
-
-    sanitizeFileName(name: string): string {
+/*    sanitizeFileName(name: string): string {
         // Replace invalid characters with underscores
         return name.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_');
-    }
+    }*/
 
-    generateAttributesSection(bomNode: BOMNode): string {
+/*    generateAttributesSection(bomNode: BOMNode): string {
         // Use the attributes from settings or default
-        /*const attributesToInclude = this.settings.attributesToInclude || [*/
+        /!*const attributesToInclude = this.settings.attributesToInclude || [*!/
         const attributesToInclude =  [
             { internalName: 'item_id', displayName: 'Item ID' },
             { internalName: 'item_revision_id', displayName: 'Revision ID' },
@@ -297,8 +254,8 @@ export class TeamcenterModal extends Modal {
 
         // Wrap the table with markers
         return `<!-- START ATTRIBUTES -->\n${tableContent}${urlContent}<!-- END ATTRIBUTES -->\n`;
-    }
-    updateNoteContent(existingContent: string, newAttributesSection: string): string {
+    }*/
+/*    updateNoteContent(existingContent: string, newAttributesSection: string): string {
         const startMarker = '<!-- START ATTRIBUTES -->';
         const endMarker = '<!-- END ATTRIBUTES -->';
 
@@ -314,10 +271,10 @@ export class TeamcenterModal extends Modal {
             // Markers not found; insert attributes at the beginning
             return `${newAttributesSection}\n\n${existingContent}`;
         }
-    }
+    }*/
 
 
-    async syncBOMNode(bomNode: BOMNode, parentFolderPath: string) {
+  /*  async syncBOMNode(bomNode: BOMNode, parentFolderPath: string) {
         const vault = this.app.vault;
 
         // Create the folder for the current BOM node
@@ -337,7 +294,8 @@ export class TeamcenterModal extends Modal {
         const notePath = `${currentFolderPath}/${sanitizedNoteName}`;
 
         // Generate the attributes section
-        const attributesSection = this.generateAttributesSection(bomNode);
+        //const attributesSection = this.generateAttributesSection(bomNode);
+        const attributesSection = generateAttributesSection(bomNode);
 
         // Check if the note exists
         let existingNote = vault.getAbstractFileByPath(notePath);
@@ -346,7 +304,8 @@ export class TeamcenterModal extends Modal {
             const existingContent = await vault.read(existingNote);
 
             // Replace or insert the attributes section
-            const updatedContent = this.updateNoteContent(existingContent, attributesSection);
+            //const updatedContent = this.updateNoteContent(existingContent, attributesSection);
+            const updatedContent = updateNoteContent(existingContent, attributesSection);
 
             // Update the note with the new content
             await vault.modify(existingNote, updatedContent);
@@ -360,9 +319,9 @@ export class TeamcenterModal extends Modal {
         for (const childNode of bomNode.children) {
             await this.syncBOMNode(childNode, currentFolderPath);
         }
-    }
+    }*/
 
-    async syncBOM() {
+   /* async syncBOM() {
         // Ensure that a BOM has been loaded
         if (!this.bomTree) {
             new Notice('Please load a BOM before syncing.');
@@ -386,6 +345,6 @@ export class TeamcenterModal extends Modal {
             console.error('Error during BOM synchronization:', error);
             new Notice('Failed to synchronize BOM. Check console for details.');
         }
-    }
+    }*/
 
 }

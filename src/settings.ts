@@ -2,7 +2,7 @@
 
 import {App, DropdownComponent, PluginSettingTab, Setting, TextComponent} from 'obsidian';
 import type TeamcenterIntegratorPlugin from 'main';
-import TeamcenterApi, {RevisionRule} from './teamcenterApi';
+import TcAPI, {RevisionRule} from './tcAPI';
 
 export interface TeamcenterIntegratorPluginSettings {
     tcUrl: string;
@@ -43,7 +43,7 @@ export class TeamcenterIntegratorSettingTab extends PluginSettingTab {
         // Dropdown for Revision Rule
         let dropdownEventAttached = false;
         const {containerEl} = this;
-        const teamcenterApi = new TeamcenterApi(DEFAULT_SETTINGS);
+        const teamcenterApi = new TcAPI(DEFAULT_SETTINGS);
         containerEl.empty();
 
         containerEl.createEl('h2', {text: 'Teamcenter Integration Settings'});
