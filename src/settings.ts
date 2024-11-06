@@ -9,6 +9,7 @@ export interface TeamcenterIntegratorPluginSettings {
     tcUrlWebTierPort: string;
     tcWebTierAppName: string;
     tcAWCUrl:string; //localhost:3000/#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid=wfhZwhTFppgr6D
+    tcAWCUrlPort:string;
     userName: string;
     userPassword: string;
     selectedRevisionRuleUid:string;
@@ -20,6 +21,7 @@ export const DEFAULT_SETTINGS: TeamcenterIntegratorPluginSettings = {
     tcUrlWebTierPort: '7001',
     tcWebTierAppName: 'tc',
     tcAWCUrl:'',
+    tcAWCUrlPort:'3000',
     userName: '',
     userPassword: '',
     selectedRevisionRuleUid:'',
@@ -80,18 +82,28 @@ export class TeamcenterIntegratorSettingTab extends PluginSettingTab {
                     this.plugin.settings.tcUrlWebTierPort = value.trim();
                     await this.plugin.saveSettings();
                 }));
+
         new Setting(containerEl)
             .setName('AWC_URL')
-            .setDesc('The full path to AWC, like http://awcsrv.qqq.com:3000/')
+            .setDesc('Base URL of your AWC server.')
             .addText(text => text
-                .setPlaceholder('Enter AWC path')
+                .setPlaceholder('Enter AWC_URL')
                 .setValue(this.plugin.settings.tcAWCUrl)
                 .onChange(async (value) => {
                     this.plugin.settings.tcAWCUrl = value.trim();
                     await this.plugin.saveSettings();
                 }));
 
-
+        new Setting(containerEl)
+            .setName('AWCURL_PORT')
+            .setDesc('Connection port of your AWC server (typically: 3000).')
+            .addText(text => text
+                .setPlaceholder('Enter AWCURL_PORT')
+                .setValue(this.plugin.settings.tcAWCUrlPort)
+                .onChange(async (value) => {
+                    this.plugin.settings.tcAWCUrlPort = value.trim();
+                    await this.plugin.saveSettings();
+                }));
         new Setting(containerEl)
             .setName('User Name')
             .setDesc('Your Teamcenter username.')

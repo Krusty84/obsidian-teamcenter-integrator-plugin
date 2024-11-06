@@ -28,14 +28,13 @@ export function generateBOMHtml(bomNode: BOMNode, parentUid: string | null = nul
     // Recursively build child rows
     let childrenHtml = '';
     for (const child of bomNode.children) {
-        //childrenHtml += this.generateBOMHtml(child, bomNode.uid, depth + 1);
         childrenHtml += generateBOMHtml(child, bomNode.uid, depth + 1);
     }
 
     return rowHtml + childrenHtml;
 }
 
-export function generateAttributesSection(bomNode: BOMNode): string {
+export function generateAttributesSection(bomNode: BOMNode, settings?:any): string {
     // Use the attributes from settings or default
     /*const attributesToInclude = this.settings.attributesToInclude || [*/
     const attributesToInclude =  [
@@ -55,9 +54,10 @@ export function generateAttributesSection(bomNode: BOMNode): string {
     }
 
     // Build the URL using tcUrl from settings and UID from bomNode
-    const tcUrl = this.settings.tcAWCUrl || '';
+    const tcAWCUrl = settings.tcAWCUrl || '';
+    const tcAWCUrlPort = settings.tcAWCUrlPort || '';
     const itemRevUid = bomNode.itemRevUid;
-    const teamcenterUrl = `${tcUrl}#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid=${itemRevUid}`;
+    const teamcenterUrl = `${tcAWCUrl}:${tcAWCUrlPort}/#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid=${itemRevUid}`;
 
     // Add the URL below the table
     const urlContent = `\n[Open in Teamcenter](${teamcenterUrl})\n`;
@@ -85,7 +85,7 @@ export function updateNoteContent(existingContent: string, newAttributesSection:
 }
 
 
-export async function syncBOMNode(bomNode: BOMNode, parentFolderPath: string) {
+export async function syncBOMNode(bomNode: BOMNode, parentFolderPath: string,settings:any) {
     const vault = this.app.vault;
 
     // Create the folder for the current BOM node
@@ -105,9 +105,7 @@ export async function syncBOMNode(bomNode: BOMNode, parentFolderPath: string) {
     const notePath = `${currentFolderPath}/${sanitizedNoteName}`;
 
     // Generate the attributes section
-    //const attributesSection = this.generateAttributesSection(bomNode);
-    const attributesSection = generateAttributesSection(bomNode);
-
+    const attributesSection = generateAttributesSection(bomNode,settings);
     // Check if the note exists
     let existingNote = vault.getAbstractFileByPath(notePath);
     if (existingNote && existingNote instanceof TFile) {
@@ -115,7 +113,6 @@ export async function syncBOMNode(bomNode: BOMNode, parentFolderPath: string) {
         const existingContent = await vault.read(existingNote);
 
         // Replace or insert the attributes section
-        //const updatedContent = this.updateNoteContent(existingContent, attributesSection);
         const updatedContent = updateNoteContent(existingContent, attributesSection);
 
         // Update the note with the new content
@@ -128,16 +125,11 @@ export async function syncBOMNode(bomNode: BOMNode, parentFolderPath: string) {
 
     // Recursively process child BOM nodes
     for (const childNode of bomNode.children) {
-        await this.syncBOMNode(childNode, currentFolderPath);
+        await syncBOMNode(childNode, currentFolderPath,settings);
     }
 }
 
-export async function syncBOM(isLoadBom:any) {
-    // Ensure that a BOM has been loaded
-    if (/*!this.bomTree*/!isLoadBom) {
-        new Notice('Please load a BOM before syncing.');
-        return;
-    }
+export async function syncBOM(bomTree: BOMNode, settings:any) {
 
     const vault = this.app.vault;
     const teamcenterBOMFolder = 'Teamcenter BOMs';
@@ -150,8 +142,7 @@ export async function syncBOM(isLoadBom:any) {
 
     // Start synchronization
     try {
-        //await this.syncBOMNode(this.bomTree, teamcenterBOMFolder);
-        await syncBOMNode(this.bomTree, teamcenterBOMFolder);
+        await syncBOMNode(bomTree, teamcenterBOMFolder,settings);
         new Notice('BOM synchronized successfully.');
     } catch (error) {
         console.error('Error during BOM synchronization:', error);
