@@ -2,8 +2,10 @@
   "tcUrl": "http://192.168.1.33",
   "tcUrlWebTierPort": "7001",
   "tcWebTierAppName": "tc",
+  "tcAWCUrl": "http://192.168.1.33",
+  "tcAWCUrlPort": "3000",
   "userName": "user2",
   "userPassword": "user2",
-  "selectedRevisionRuleUid": "C_nFN7dwppgr6D",
-  "selectedRevisionRuleName": "Freeze Point or Latest"
+  "selectedRevisionRuleUid": "QkqF927kppgr6D",
+  "selectedRevisionRuleName": "Latest Working"
 }

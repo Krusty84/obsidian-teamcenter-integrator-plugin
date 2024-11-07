@@ -1,4 +1,4 @@
-.teamcenter-modal {
+.teamcenter-modal-window {
     width: 800px; /* Set the desired width */
     height: 600px; /* Set the desired height */
     max-width: 90%; /* Optional: Adjust max-width */
@@ -6,13 +6,13 @@
 }
 
 
-.teamcenter-modal .modal-content {
+.teamcenter-modal-window .modal-window-content {
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-.modal-wrapper {
+.modal-window-wrapper {
     display: flex;
     flex-direction: column;
     height: 100%; /* Ensure the wrapper fills the modal */

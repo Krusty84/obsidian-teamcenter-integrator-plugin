@@ -349,6 +349,59 @@ export default class TcAPI {
         }
     }
 
+    async closeExistsBOMWindows(tcUrl=this.settings.tcUrl,tcUrlWebTierPort=this.settings.tcUrlWebTierPort,
+                  tcWebTierAppName=this.settings.tcWebTierAppName): Promise<any> {
+        if (!this.jsessionId) {
+            console.error('Not logged in. Please login first.');
+            throw new Error('Not logged in');
+        }
+
+        const url = `${tcUrl}:${tcUrlWebTierPort}/${tcWebTierAppName}/JsonRestServices/Cad-2007-01-StructureManagement/closeBOMWindows`;
+
+        const payload = {
+            "header": {
+                "state": {
+                    "formatProperties": true,
+                    "stateless": true,
+                    "unloadObjects": false,
+                    "enableServerStateHeaders": true,
+                    "locale": "en_US"
+                },
+                "policy": {}
+            },
+            "body": {
+                "bomWindows": []
+            }
+        };
+
+        const requestOptions: RequestUrlParam = {
+            url: url,
+            method: 'POST',
+            contentType: 'application/json',
+            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json',
+                'Cookie': `JSESSIONID=${this.jsessionId}`
+            },
+            throw: false
+        };
+
+        try {
+            const response: RequestUrlResponse = await requestUrl(requestOptions);
+
+            if (response.status === 200) {
+                const data = response.json;
+                return data;
+            } else {
+                console.error('Failed to close BOM Windows. Status:', response.status, 'Response:', response.text);
+                throw new Error('Failed to close BOM Windows');
+            }
+        } catch (error) {
+            console.error('An error occurred while closing BOM Windows:', error);
+            throw error;
+        }
+    }
+
     async openBOM(bomLineUid: string, tcUrl=this.settings.tcUrl,tcUrlWebTierPort=this.settings.tcUrlWebTierPort,
                   tcWebTierAppName=this.settings.tcWebTierAppName): Promise<any> {
         if (!this.jsessionId) {
@@ -479,5 +532,4 @@ export default class TcAPI {
 
         return buildBOMTree(rootUid);
     }
-    // Future methods will use this.jsessionId for authenticated requests
 }

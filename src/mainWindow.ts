@@ -1,11 +1,11 @@
 // MainWindow.ts
 
-import {App, Modal, Notice, Setting, TFile} from 'obsidian';
-import TcAPI, { BOMNode} from './tcAPI';
+import {App, Modal, Notice, Setting} from 'obsidian';
+import TcAPI, {BOMNode} from './tcAPI';
 import {TeamcenterIntegratorPluginSettings} from 'src/settings'
 import {generateBOMHtml, syncBOM} from "./bomUtils";
+
 export class MainWindow extends Modal {
-    //settings: TeamcenterIntegratorPluginSettings;
     tcAPI: TcAPI;
     private itemId = "";
     private revId = "";
@@ -19,14 +19,15 @@ export class MainWindow extends Modal {
 
     async onOpen() {
         const {contentEl,modalEl} = this;
-        modalEl.addClass('teamcenter-modal');
+        modalEl.addClass('teamcenter-modal-window');
         this.tcAPI = new TcAPI(this.settings);
         contentEl.empty();
         // Create a wrapper for the entire modal content
-        const wrapper = contentEl.createDiv({ cls: 'modal-wrapper' });
+        const wrapper = contentEl.createDiv({ cls: 'modal-window-wrapper' });
         // Create the fixed header container for inputs
         const headerContainer = wrapper.createDiv({ cls: 'header-container' });
-        headerContainer.createEl('h2', { text: 'Teamcenter Query' });
+        headerContainer.createEl('h2', { text: 'Teamcenter integrator' });
+        headerContainer.createEl('h6', { text: 'The revision rule used: ' + this.settings.selectedRevisionRuleName});
 
         // Text field for Item ID
         new Setting(headerContainer)
@@ -39,7 +40,7 @@ export class MainWindow extends Modal {
             });
 
         new Setting(headerContainer)
-            .setName('Revision ID')
+            .setName('Revision ID (revision containing BOM)')
             .addText(text => {
                 text.setPlaceholder('Enter Revision ID')
                     .onChange(value => {
@@ -54,7 +55,8 @@ export class MainWindow extends Modal {
                     .onClick(async () => {
                         //Teamcenter Dance Start
                         await this.tcAPI.login();
-                        const { itemUid, itemRevUid } = await this.tcAPI.getItemUIDfromID(this.itemId,this.revId);
+                        const { itemUid} = await this.tcAPI.getItemUIDfromID(this.itemId,this.revId);
+                        await this.tcAPI.closeExistsBOMWindows();
                         const { bomLineUid } = await this.tcAPI.createBOMWindow(itemUid);
                         this.bomTree = await this.tcAPI.openBOM(bomLineUid);
                         this.displayBOM(this.bomTree);
@@ -84,7 +86,7 @@ export class MainWindow extends Modal {
         contentEl.empty();
     }
 
-    displayBOM(bomTree: BOMNode) {
+    displayBOM(bomTree: BOMNode | null) {
         const container = this.contentContainer;
         // Clear previous BOM content
         container.empty();
@@ -108,9 +110,8 @@ export class MainWindow extends Modal {
         const tbody = table.createEl('tbody');
 
         // Generate and append the BOM rows
-       // const bomHtml = this.generateBOMHtml(bomTree);
-        const bomHtml = generateBOMHtml(bomTree);
-        tbody.innerHTML = bomHtml;
+        //const bomHtml = this.generateBOMHtml(bomTree);
+        tbody.innerHTML = generateBOMHtml(bomTree);
 
         // Add event listeners
         this.addEventListeners(collapsibleSection);

@@ -1,9 +1,9 @@
 {
-	"id": "tc-integrator-20242610",
+	"id": "tc-integrator",
 	"name": "Teamcenter Integrator",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Teamcenter Integrator blahblah",
+	"description": "Only for those who have access to the PLM system Teamcenter (Siemens). Importing the BOM from Teamcenter in the form of a notebook structure.",
 	"author": "Alexey Sedoykin",
 	"authorUrl": "https://www.linkedin.com/in/sedoykin",
 	"isDesktopOnly": true

@@ -8,7 +8,7 @@ export interface TeamcenterIntegratorPluginSettings {
     tcUrl: string;
     tcUrlWebTierPort: string;
     tcWebTierAppName: string;
-    tcAWCUrl:string; //localhost:3000/#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid=wfhZwhTFppgr6D
+    tcAWCUrl:string;
     tcAWCUrlPort:string;
     userName: string;
     userPassword: string;
@@ -32,8 +32,6 @@ export const DEFAULT_SETTINGS: TeamcenterIntegratorPluginSettings = {
 export class TeamcenterIntegratorSettingTab extends PluginSettingTab {
     plugin: TeamcenterIntegratorPlugin;
     private revisionRules: RevisionRule[] = [];
-    private selectedRevisionRuleUid: string | null = null;
-    private selectedRevisionRule: string | null = null;
 
     constructor(app: App, plugin: TeamcenterIntegratorPlugin) {
         super(app, plugin);
@@ -120,7 +118,6 @@ export class TeamcenterIntegratorSettingTab extends PluginSettingTab {
             .setDesc('Your Teamcenter password.')
             .addText(text => {
                 text.setPlaceholder('Enter your password')
-                    .setDisabled(true)
                     .setValue(this.plugin.settings.userPassword)
                     .onChange(async (value) => {
                         this.plugin.settings.userPassword = value.trim();

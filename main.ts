@@ -1,10 +1,9 @@
-import { Notice, Plugin,normalizePath } from 'obsidian';
-
-// Remember to rename these classes and interfaces!
+import {addIcon, Plugin} from 'obsidian';
 
 import TcAPI from './src/tcAPI';
 import {MainWindow} from "./src/mainWindow";
 import { DEFAULT_SETTINGS, TeamcenterIntegratorSettingTab} from 'src/settings'
+import {tcIcon} from "./src/constants";
 
 export interface TeamcenterIntegratorPluginSettings {
 	tcUrl: string;
@@ -24,25 +23,13 @@ export default class TeamcenterIntegratorPlugin extends Plugin {
 	teamcenterApi: TcAPI;
 	async onload() {
 		await this.loadSettings();
-
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', async (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-			/*await this.buildHierarchy();*/
-
+		addIcon("tcIcon", tcIcon);
+		this.addRibbonIcon("tcIcon", 'Go to the Teamcenter', async () => {
 			new MainWindow(this.app, this.settings).open();
-
 		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new TeamcenterIntegratorSettingTab(this.app, this));
 	}
-
 	onunload() {
-
 	}
 
 	async loadSettings() {
