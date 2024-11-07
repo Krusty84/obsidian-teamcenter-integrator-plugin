@@ -11,7 +11,7 @@ export class MainWindow extends Modal {
     private revId = "";
     private settings: TeamcenterIntegratorPluginSettings;
     private contentContainer: HTMLElement;
-    private bomTree: BOMNode | null = null;
+    private bomTree: BOMNode;
     constructor(app: App,settings: TeamcenterIntegratorPluginSettings) {
         super(app);
         this.settings = settings;
@@ -86,7 +86,7 @@ export class MainWindow extends Modal {
         contentEl.empty();
     }
 
-    displayBOM(bomTree: BOMNode | null) {
+    displayBOM(bomTree: BOMNode) {
         const container = this.contentContainer;
         // Clear previous BOM content
         container.empty();
