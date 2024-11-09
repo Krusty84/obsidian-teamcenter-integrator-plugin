@@ -36,15 +36,22 @@ export function generateBOMHtml(bomNode: BOMNode, parentUid: string | null = nul
 
 export function generateAttributesSection(bomNode: BOMNode, settings?:any): string {
     // Use the attributes from settings or default
-    /*const attributesToInclude = this.settings.attributesToInclude || [*/
-    const attributesToInclude =  [
+    const attributesToInclude = settings.attributesToInclude || [
         { internalName: 'item_id', displayName: 'Item ID' },
         { internalName: 'item_revision_id', displayName: 'Revision ID' },
         { internalName: 'object_name', displayName: 'Name' },
         { internalName: 'object_desc', displayName: 'Description' },
         { internalName: 'owning_user', displayName: 'Owner' },
         { internalName: 'last_mod_date', displayName: 'Last Modified' },
-    ];
+    ]
+ /*   const attributesToInclude =  [
+        { internalName: 'item_id', displayName: 'Item ID' },
+        { internalName: 'item_revision_id', displayName: 'Revision ID' },
+        { internalName: 'object_name', displayName: 'Name' },
+        { internalName: 'object_desc', displayName: 'Description' },
+        { internalName: 'owning_user', displayName: 'Owner' },
+        { internalName: 'last_mod_date', displayName: 'Last Modified' },
+    ];*/
 
     // Build the table content
     let tableContent = `| Attribute | Value |\n|---|---|\n`;

@@ -3,6 +3,7 @@
 import {App, DropdownComponent, PluginSettingTab, Setting, TextComponent} from 'obsidian';
 import type TeamcenterIntegratorPlugin from 'main';
 import TcAPI, {RevisionRule} from './tcAPI';
+import {AttributeConfig} from "./type";
 
 export interface TeamcenterIntegratorPluginSettings {
     tcUrl: string;
@@ -14,6 +15,7 @@ export interface TeamcenterIntegratorPluginSettings {
     userPassword: string;
     selectedRevisionRuleUid:string;
     selectedRevisionRuleName:string;
+    attributesToInclude: AttributeConfig[];
 }
 
 export const DEFAULT_SETTINGS: TeamcenterIntegratorPluginSettings = {
@@ -26,6 +28,14 @@ export const DEFAULT_SETTINGS: TeamcenterIntegratorPluginSettings = {
     userPassword: '',
     selectedRevisionRuleUid:'',
     selectedRevisionRuleName:'',
+    attributesToInclude: [
+        { internalName: 'item_id', displayName: 'Item ID' },
+        { internalName: 'item_revision_id', displayName: 'Revision ID' },
+        { internalName: 'object_name', displayName: 'Name' },
+        { internalName: 'object_desc', displayName: 'Description' },
+        { internalName: 'owning_user', displayName: 'Owner' },
+        { internalName: 'last_mod_date', displayName: 'Last Modified' },
+    ],
 };
 
 // Settings tab for the plugin
@@ -102,6 +112,7 @@ export class TeamcenterIntegratorSettingTab extends PluginSettingTab {
                     this.plugin.settings.tcAWCUrlPort = value.trim();
                     await this.plugin.saveSettings();
                 }));
+
         new Setting(containerEl)
             .setName('User Name')
             .setDesc('Your Teamcenter username.')
@@ -125,7 +136,6 @@ export class TeamcenterIntegratorSettingTab extends PluginSettingTab {
                     });
             });
 
-
         new Setting(containerEl)
             .addButton(button => {
                 button.setButtonText('Check Teamcenter login/password')
@@ -144,7 +154,6 @@ export class TeamcenterIntegratorSettingTab extends PluginSettingTab {
                         }
                     });
             });
-
 
         new Setting(containerEl)
             .setName('Revision Rule')
@@ -232,6 +241,82 @@ export class TeamcenterIntegratorSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 });
             });
+
+        // Attributes Configuration
+        containerEl.createEl('h3', { text: 'Attributes Configuration' });
+
+        const attributesContainer = containerEl.createDiv();
+
+        const refreshAttributesList = () => {
+            attributesContainer.empty();
+
+            this.plugin.settings.attributesToInclude.forEach((attr, index) => {
+                const attrSetting = new Setting(attributesContainer)
+                    .addText(text => text
+                        .setPlaceholder('Internal Name')
+                        .setValue(attr.internalName)
+                        .onChange(async (value) => {
+                            this.plugin.settings.attributesToInclude[index].internalName = value;
+                            await this.plugin.saveSettings();
+                        }))
+                    .addText(text => text
+                        .setPlaceholder('Display Name')
+                        .setValue(attr.displayName)
+                        .onChange(async (value) => {
+                            this.plugin.settings.attributesToInclude[index].displayName = value;
+                            await this.plugin.saveSettings();
+                        }))
+                    .addExtraButton(cb => {
+                        cb.setIcon('up-chevron-glyph')
+                            .setTooltip('Move Up')
+                            .onClick(async () => {
+                                if (index > 0) {
+                                    const temp = this.plugin.settings.attributesToInclude[index - 1];
+                                    this.plugin.settings.attributesToInclude[index - 1] = attr;
+                                    this.plugin.settings.attributesToInclude[index] = temp;
+                                    await this.plugin.saveSettings();
+                                    refreshAttributesList();
+                                }
+                            });
+                    })
+                    .addExtraButton(cb => {
+                        cb.setIcon('down-chevron-glyph')
+                            .setTooltip('Move Down')
+                            .onClick(async () => {
+                                if (index < this.plugin.settings.attributesToInclude.length - 1) {
+                                    const temp = this.plugin.settings.attributesToInclude[index + 1];
+                                    this.plugin.settings.attributesToInclude[index + 1] = attr;
+                                    this.plugin.settings.attributesToInclude[index] = temp;
+                                    await this.plugin.saveSettings();
+                                    refreshAttributesList();
+                                }
+                            });
+                    })
+                    .addExtraButton(cb => {
+                        cb.setIcon('cross')
+                            .setTooltip('Remove')
+                            .onClick(async () => {
+                                this.plugin.settings.attributesToInclude.splice(index, 1);
+                                await this.plugin.saveSettings();
+                                refreshAttributesList();
+                            });
+                    });
+            });
+
+            // Add Attribute Button
+            new Setting(attributesContainer)
+                .addButton(button => {
+                    button.setButtonText('Add Attribute')
+                        .setCta()
+                        .onClick(async () => {
+                            this.plugin.settings.attributesToInclude.push({ internalName: '', displayName: '' });
+                            await this.plugin.saveSettings();
+                            refreshAttributesList();
+                        });
+                });
+        };
+
+        refreshAttributesList();
 
 // Helper function to populate the dropdown with revision rules
         function populateDropdownWithRevisionRules(dropdown: DropdownComponent, revisionRules: any[]) {

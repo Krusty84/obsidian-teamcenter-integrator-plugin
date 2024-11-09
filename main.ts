@@ -4,6 +4,7 @@ import TcAPI from './src/tcAPI';
 import {MainWindow} from "./src/mainWindow";
 import { DEFAULT_SETTINGS, TeamcenterIntegratorSettingTab} from 'src/settings'
 import {tcIcon} from "./src/constants";
+import {AttributeConfig} from "./src/type";
 
 export interface TeamcenterIntegratorPluginSettings {
 	tcUrl: string;
@@ -15,6 +16,7 @@ export interface TeamcenterIntegratorPluginSettings {
 	userPassword: string;
 	selectedRevisionRuleName:string;
 	selectedRevisionRuleUid:string;
+	attributesToInclude: AttributeConfig[];
 }
 
 

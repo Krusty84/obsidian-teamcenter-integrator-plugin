@@ -1,6 +1,7 @@
 // TcAPI.ts
 
 import {requestUrl, RequestUrlParam, RequestUrlResponse} from 'obsidian';
+import {AttributeConfig} from "./type";
 
 interface TeamcenterIntegratorPluginSettings {
     tcUrl: string;
@@ -8,6 +9,7 @@ interface TeamcenterIntegratorPluginSettings {
     tcWebTierAppName:string;
     userName: string;
     userPassword: string;
+    attributesToInclude: AttributeConfig[];
 }
 
 export interface RevisionRule {
@@ -408,6 +410,8 @@ export default class TcAPI {
             console.error('Not logged in. Please login first.');
             throw new Error('Not logged in');
         }
+        const tcAttributeNames = this.settings.attributesToInclude.map(attr => attr.internalName);
+        const allAttributes = Array.from(new Set([...tcAttributeNames]));
 
         const url = `${tcUrl}:${tcUrlWebTierPort}/${tcWebTierAppName}/JsonRestServices/Cad-2007-01-StructureManagement/expandPSAllLevels`;
 
@@ -424,15 +428,7 @@ export default class TcAPI {
                     "types": [
                         {
                             "name": "ItemRevision",
-                            "properties": [
-                                { "name": "item_id" },
-                                { "name": "item_revision_id" },
-                                { "name": "object_name" },
-                                { "name": "object_desc" },
-                                { "name": "object_type" },
-                                { "name": "owning_user" },
-                                { "name": "last_mod_date" }
-                            ]
+                            "properties": allAttributes.map(name => ({ "name": name }))
                         }
                     ]
                 }
