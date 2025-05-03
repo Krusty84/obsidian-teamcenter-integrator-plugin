@@ -1,4 +1,4 @@
-# Teamcenter Integrator Plugin: highlighting word occurrences
+# Teamcenter Integrator Plugin
 
 ### ATTENTION! READ BEFORE!
 Please note that to use this plugin, you must have access to the Teamcenter system from Siemens Digital Industries Software.  
